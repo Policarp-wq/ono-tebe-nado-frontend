@@ -1,6 +1,7 @@
 export type LotStatus = 'wait' | 'active' | 'closed';
 
 export interface IAuction {
+    id: string;
     status: LotStatus;
     datetime: string;
     price: number;
@@ -14,6 +15,23 @@ export interface ILotItem {
     about: string;
     description?: string;
     image: string;
+
+}
+
+export interface ILotCard extends ILotItem{
+    status: LotStatus,
+    datetime: string;
+}
+
+export interface IBasketBid{
+    lotId: string,
+    title: string,
+    lastPrice: number,
+    lastPriceByCurrentUser: boolean
+}
+
+export interface IBasketClosedBid extends IBasketBid{
+    checked: boolean 
 }
 
 export type ILot = ILotItem & IAuction;
