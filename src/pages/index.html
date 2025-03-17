@@ -196,10 +196,16 @@
 				<button class="modal__close" aria-label="закрыть"></button>
 				<div class="modal__content">
 					<nav class="tabs">
-						<button disabled class="button button_outline tabs__item_active">
+						<button
+							name="active"
+							disabled
+							class="button button_outline tabs__item_active"
+						>
 							Активные
 						</button>
-						<button class="button button_outline">Закрытые</button>
+						<button name="closed" class="button button_outline">
+							Закрытые
+						</button>
 					</nav>
 					<div class="basket">
 						<div class="basket__item bid">
@@ -355,6 +361,17 @@
 			</div>
 		</div>
 
+		<template id="empty">
+			<div class="state">
+				<img
+					class="state__image"
+					src="<%=require('../images/soft-flower.svg')%>"
+				/>
+				<h2 class="state__title">Тут пока ничего нет</h2>
+				<button type="button" class="button state__action">На главную</button>
+			</div>
+		</template>
+
 		<template id="success">
 			<div class="state">
 				<img class="state__image" src="<%=require('../images/ready.svg')%>" />
@@ -402,7 +419,7 @@
 			<div class="basket">
 				<div class="basket__list"></div>
 				<div class="basket__actions">
-					<span class="basket__total"></span>
+					<span class="basket__total">0</span>
 					<button class="button basket__action">Оформить</button>
 				</div>
 			</div>

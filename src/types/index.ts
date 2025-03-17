@@ -18,20 +18,28 @@ export interface ILotItem {
 
 }
 
-export interface ILotCard extends ILotItem{
+export interface ITabState{
+    state: string;
+}
+
+export interface ILotCard extends ILotItem{ 
     status: LotStatus,
     datetime: string;
 }
 
 export interface IBasketBid{
     lotId: string,
+    image: string
     title: string,
     lastPrice: number,
     lastPriceByCurrentUser: boolean
+    closed: boolean
 }
 
-export interface IBasketClosedBid extends IBasketBid{
-    checked: boolean 
+export interface IBasketBidActiveCheckInfo {
+    price: number
+    checked: boolean,
+    lotId: string,
 }
 
 export type ILot = ILotItem & IAuction;

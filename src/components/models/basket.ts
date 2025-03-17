@@ -19,7 +19,19 @@ export class Basket extends Model{
             }
         }
         this.bids.push(bid);
-        this.events.emit(Basket.BasketChanged, bid);
+        this.events.emit(Basket.BasketChanged, this.bids);
+    }
+
+    public getActiveBids(): IBasketBid[] {
+        return this.bids.filter(b => !b.closed);
+    }
+
+    public getClosedBids(): IBasketBid[] {
+        return this.bids.filter(b => b.closed);
+    }
+
+    public containsLotAsClosed(id: string){
+        return this.bids.some(b => b.lotId == id)
     }
 
     public getBids(): IBasketBid[]{

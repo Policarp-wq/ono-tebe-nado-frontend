@@ -21,9 +21,10 @@ export class AuctionView extends View<IAuction> {
  
         this._text = this.container.querySelector(bem("lot", "auction-text").class);
         this._history = this.container.querySelector(bem("lot", "history-bids").class);
-
+        console.log(`Opened auction for card with id ${data.id}`)
         this._form = this.container.querySelector(bem("lot", "bid").class);
         this._priceInput = this._form.querySelector(bem("form", "input").class);
+        this._priceInput.value = data.price.toString();
         this._form.addEventListener('submit', (evt) => {
             evt.preventDefault();
             const val = this._priceInput.value;
