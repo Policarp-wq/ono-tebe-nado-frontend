@@ -6,7 +6,7 @@ import {EventEmitter} from "./components/base/events";
 import { Model } from './components/base/Model';
 import { extend } from 'lodash';
 import { IBasketBid, IBasketBidActiveCheckInfo, IBid, ILot, ILotCard, IOrderForm, ITabState } from './types';
-import { dayjs, ensureElement } from './utils/utils';
+import { bem, dayjs, ensureElement } from './utils/utils';
 import { CatalogView } from './components/views/catalogView';
 import { Catalog } from './components/models/catalog';
 import { CatalogCard } from './components/views/catalogCard';
@@ -22,6 +22,7 @@ import { Page } from './components/views/page';
 import { BasketBidClosed } from './components/views/bids/basketBidClosed';
 import { OrderBuilder } from './components/models/orderBuilder';
 import { Form } from './components/common/Form';
+import { LotCache } from './components/models/lotCache';
 
 const events = new EventEmitter();
 const api = new AuctionAPI(CDN_URL, API_URL);
@@ -42,21 +43,27 @@ const templates = {
     cardTemplate: ensureElement<HTMLTemplateElement>("#card"),
     previewTemplate: ensureElement<HTMLTemplateElement>("#preview"),
     auctionTemplate: ensureElement<HTMLTemplateElement>("#auction"),
-    orderFormTemplate: ensureElement<HTMLTemplateElement>("#order")
+    orderFormTemplate: ensureElement<HTMLTemplateElement>("#order"),
+    orderSuccessTempalte: ensureElement<HTMLTemplateElement>("#success")
 }
 // Модель данных приложения
 const orderBuilder = new OrderBuilder(events);
+const cache = new LotCache();
 
 // Глобальные контейнеры
 const modalContainer = ensureElement<HTMLDivElement>("#modal-container");
 const modal = new Modal(modalContainer, events)
 const emptyState = View.getTemplateElement(templates.emptyStateTemplate);
 (emptyState.querySelector(".button") as HTMLButtonElement).addEventListener('click', () =>{
-    events.emit("empty:go_main");
+    events.emit("go_main");
 })
 const page = new Page(ensureElement<HTMLElement>(".page"), events);
 // Переиспользуемые части интерфейса
 const orderForm = new Form<IOrderForm>(View.getTemplateElement(templates.orderFormTemplate) as HTMLFormElement, events)
+const success = View.getTemplateElement(templates.orderSuccessTempalte);
+(success.querySelector(bem("state", "action").class) as HTMLButtonElement).addEventListener('click', () => {
+    events.emit("go_main")
+})
 
 const tabs = TabView.getTemplateElement(templates.tabTemplate);
 const tabsView = new TabView(tabs, [{state: "active"}, {state: "closed"}] as ITabState[], events, "basket_tabs");
@@ -85,10 +92,13 @@ const catalogView = new CatalogView(catalogContainer, catalog, events, templates
 // Поймали событие, сделали что нужно
 
 function openCard(id: string){
-
+    
     api.getLotItem(id).then(res => {
-        if(basket.containsLotAsClosed(id))
-            res.status = "closed";
+        const cached = cache.get(id);
+        if(cached){
+            res.status = cached.status;
+            res.price = cached.price ? cached.price : res.price;
+        }
         const lotView = new LotPreview(LotPreview.getTemplateElement(templates.previewTemplate), res, events, templates.auctionTemplate);
         modal.content = lotView.render();
         modal.open();
@@ -105,9 +115,11 @@ events.on(LotPreview.MakeBidEvent, (data) => {
     const bid = data as {price: number, lot: ILot};
     api.placeBid(bid.lot.id, {price: bid.price} as IBid)
         .then(upd => {
-            console.log(upd);
             upd.status = "closed"
+            console.log(upd);
+            cache.set(bid.lot.id, {status: upd.status, price: bid.price})
             events.emit(LotPreview.LotUpdated + ":" + upd.id, upd);
+            events.emit("lot:updated" + "_" + bid.lot.id, upd)
             let basketBid: IBasketBid = {
                 lotId: bid.lot.id,
                 title: bid.lot.title,
@@ -125,7 +137,7 @@ events.on(BasketBidActive.BasketBidOpen, (info) =>{
     openCard(id);
 })
 
-events.on("empty:go_main", () =>{
+events.on("go_main", () =>{
     modal.close();
 })
 
@@ -141,6 +153,41 @@ events.on(BasketBidClosed.BasketBidCheckChanged, (info) => {
 }
 );
 
+events.on(BasketView.BasketOrderConfirmEvent, () =>{
+    if(orderBuilder.isEmpty())
+        return;
+    modal.render({
+        content: orderForm.render({
+            phone: '',
+            email: '',
+            valid: false,
+            errors: ''
+        })
+    });
+});
+
+events.on(/^order\..*:change/, (data: { field: keyof IOrderForm, value: string }) => {
+    orderBuilder.setOrderField(data.field, data.value);
+    orderForm.valid = orderBuilder.isValid()
+});
+
+events.on("order:submit", () =>{
+    const order = orderBuilder.build();
+    api.orderLots(order).then(res => {
+        order.items.forEach(i => {
+            cache.set(i, {status: "closed"})
+        })
+        modal.render(
+           {
+            content: success
+           }
+        );
+        orderBuilder.clear();
+        basket.clearActive();
+    })
+})
+
+catalog.addLots
 
 // Получаем лоты с сервера
 api.getLotList()
@@ -152,4 +199,4 @@ api.getLotList()
         console.error(err);
     });
 
-
+// TODO: Confirm button in basket bid active not active if 0 selected

@@ -41,9 +41,9 @@ export class LotPreview extends View<ILot>{
                 return;
             this.events.emit(LotPreview.MakeBidEvent, {price: bid.price, lot: this.data})
         })
-        this.events.on(LotPreview.LotUpdated + ":" + this.data.id, (info) => {
+        this.events.on("lot:updated" + "_" + this.data.id, (info : LotUpdate) => {
             console.log("Updating lot " + this.data.id);
-            this.updateData(info as LotUpdate)
+            this.updateData(info)
         })
 
     }

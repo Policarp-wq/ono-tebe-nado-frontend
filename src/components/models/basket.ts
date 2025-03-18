@@ -11,6 +11,10 @@ export class Basket extends Model{
             super(events);
             this.bids = [];
         }
+    public clearActive(){
+        this.bids = this.bids.filter(b => !b.closed);
+        this.events.emit(Basket.BasketChanged, this.bids);
+    }
     public addBid(bid: IBasketBid){
         for(let i = 0; i < this.bids.length; ++i){
             if(this.bids[i].lotId == bid.lotId){
