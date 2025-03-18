@@ -145,17 +145,8 @@ events.on("order:abandon", () => {
     orderBuilder.clear();
 })
 
-events.on(BasketBidClosed.BasketBidCheckChanged, (info) => {
-    const inf = info as IBasketBidActiveCheckInfo;
-    if(inf.checked)
-        orderBuilder.addBid(inf);
-    else orderBuilder.removeBid(inf);
-}
-);
-
-events.on(BasketView.BasketOrderConfirmEvent, () =>{
-    if(orderBuilder.isEmpty())
-        return;
+events.on(BasketView.BasketOrderConfirmEvent, (bids: string[]) =>{
+    orderBuilder.setBids(bids);
     modal.render({
         content: orderForm.render({
             phone: '',

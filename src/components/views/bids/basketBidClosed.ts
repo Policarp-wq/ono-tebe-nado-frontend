@@ -18,7 +18,6 @@ export class BasketBidClosed extends BasketBid{
     private checkboxChanged(){
         const info: IBasketBidActiveCheckInfo = {
             checked: this._checkbox.checked,
-            price: this.data.lastPrice,
             lotId: this.data.lotId
         }
         this.events.emit(BasketBidClosed.BasketBidCheckChanged, info);

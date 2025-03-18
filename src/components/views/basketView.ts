@@ -41,29 +41,35 @@ export class BasketView extends View<Basket>{
         this._actions = this.container.querySelector(bem("basket", "actions").class);
         this._total = this._actions.querySelector(bem("basket", "total").class);
         this._order = this._actions.querySelector(bem("basket", "action").class);
+        this._order.disabled = true;
         this.events.on(Basket.BasketChanged, bid => this.updateView())
         
-        this.events.on(BasketBidClosed.BasketBidCheckChanged, (info) => this.onActiveBidChanged(info as IBasketBidActiveCheckInfo))
-        this.events.on(OrderBuilder.TotalChangedEvent, (total) => {
-            this.setText(this._total, (total as {total: number}).total);
+        this.events.on(BasketBidClosed.BasketBidCheckChanged, (info : IBasketBidActiveCheckInfo) => this.onActiveBidChanged(info))
+        this.events.on(Basket.OrderListChanged, () => {
+            this.setText(this._total, this.data.getTotal());
+            this.onOrderChanged();
         })
 
         this._order.addEventListener('click', () =>{
-            this.events.emit(BasketView.BasketOrderConfirmEvent);
+            this.events.emit(BasketView.BasketOrderConfirmEvent, this.data.getOrderItems());
         });
     }
 
-    private onActiveBidChanged(info: IBasketBidActiveCheckInfo){
-        this.events.emit(BasketView.BasketOrderChanged, info);
+    private onOrderChanged(){
+        this._order.disabled = !this.data.isOrderValid();
     }
 
+    private onActiveBidChanged(info: IBasketBidActiveCheckInfo){
+        if(!info.checked)
+            this.data.removeFromOrder(info.lotId);
+        else this.data.addToOrderList(info.lotId);
+    }
 
     onStateUpdated(state: ITabState): void {
         const newState = state.state as BasketType;
         if(newState == this._state)
             return;
         this._state = newState;
-        this.events.emit("order:abandon");
         this.updateView();
     }
 

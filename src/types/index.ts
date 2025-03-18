@@ -37,7 +37,6 @@ export interface IBasketBid{
 }
 
 export interface IBasketBidActiveCheckInfo {
-    price: number
     checked: boolean,
     lotId: string,
 }
